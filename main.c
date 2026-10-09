@@ -1,6 +1,7 @@
 /* Ventana del proyecto*/
 
 #include "raylib.h"
+#include "raymath.h"
 #include <stdio.h>
 
 #define ANCHO 320
@@ -8,6 +9,26 @@
 #define PIXELES (ANCHO * ALTO)
 #define ESCALA 4
 Color colores[PIXELES];
+
+void printVector(Vector3 vector)
+{
+    printf("x: %f, y: %f, z: %f\n", vector.x, vector.y, vector.z);
+}
+
+typedef struct
+{
+    Vector3 position;
+    Vector3 forward;
+    Vector3 right;
+    Vector3 up;
+} CameraRay;
+
+void cameraLook(CameraRay *camera, Vector3 target)
+{
+    camera->forward = Vector3Normalize(Vector3Subtract(target, camera->position));
+    camera->right = Vector3Normalize(Vector3CrossProduct(camera->forward, (Vector3){0, 1, 0}));
+    camera->up = Vector3Normalize(Vector3CrossProduct(camera->right, camera->forward));
+}
 
 int main(void)
 {
@@ -17,6 +38,18 @@ int main(void)
     const int fontSize = 15;
 
     InitWindow(screenWidth, screenHeight, "Proyecto 2 Raytracing");
+
+    CameraRay prueba;
+    prueba.position = (Vector3){0, 0, 5};
+    prueba.right = (Vector3){0, 0, 0};
+    prueba.forward = (Vector3){0, 0, 0};
+    prueba.up = (Vector3){0, 0, 0};
+
+    printf("Prueba de calculo para la camara:\n");
+    cameraLook(&prueba, (Vector3){0, 0, 0});
+    printVector(prueba.forward);
+    printVector(prueba.right);
+    printVector(prueba.up);
 
     // Para centrar el texto
     int measurement = MeasureText(textInicio, fontSize);
