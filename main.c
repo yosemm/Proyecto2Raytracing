@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include <math.h>
 #include <stdio.h>
 
 #define ANCHO 320
@@ -30,29 +31,35 @@ void cameraLook(CameraRay *camera, Vector3 target)
     camera->up = Vector3Normalize(Vector3CrossProduct(camera->right, camera->forward));
 }
 
+Color vectorColor(Vector3 color)
+{
+    unsigned char r = (unsigned char)(Clamp(color.x, 0, 1) * 255);
+    unsigned char g = (unsigned char)(Clamp(color.y, 0, 1) * 255);
+    unsigned char b = (unsigned char)(Clamp(color.z, 0, 1) * 255);
+    return (Color){r, g, b, 255};
+}
+
+Vector3 castRay(Vector3 origen, Vector3 direccion)
+{
+    (void)origen;
+    Vector3 horizonte = (Vector3){0.55f, 0.85f, 0.3f};
+    Vector3 gramaProfundidad = (Vector3){0.1f, 0.5f, 0.15f};
+    if (direccion.y < 0)
+    {
+        return Vector3Lerp(horizonte, gramaProfundidad, -direccion.y);
+    }
+    else
+    {
+        return (Vector3Lerp((Vector3){1, 1, 1}, (Vector3){0.4f, 0.6f, 1.0f}, direccion.y));
+    }
+}
+
 int main(void)
 {
     const int screenWidth = ANCHO * ESCALA;
     const int screenHeight = ALTO * ESCALA;
-    const char textInicio[] = "Setup de proyecto";
-    const int fontSize = 15;
 
     InitWindow(screenWidth, screenHeight, "Proyecto 2 Raytracing");
-
-    CameraRay prueba;
-    prueba.position = (Vector3){0, 0, 5};
-    prueba.right = (Vector3){0, 0, 0};
-    prueba.forward = (Vector3){0, 0, 0};
-    prueba.up = (Vector3){0, 0, 0};
-
-    printf("Prueba de calculo para la camara:\n");
-    cameraLook(&prueba, (Vector3){0, 0, 0});
-    printVector(prueba.forward);
-    printVector(prueba.right);
-    printVector(prueba.up);
-
-    // Para centrar el texto
-    int measurement = MeasureText(textInicio, fontSize);
 
     SetTargetFPS(60);
 
@@ -61,17 +68,24 @@ int main(void)
     Texture2D texturaColores = LoadTextureFromImage(imagenNegro);
     UnloadImage(imagenNegro);
 
+    CameraRay cam = {.position = {0, 1, 6}};
+    float mitad = tanf(60 * DEG2RAD / 2);
+    float aspecto = (float)ANCHO / ALTO;
+
     while (!WindowShouldClose())
     {
+        cameraLook(&cam, (Vector3){0, 0, 0});
+
         // Arreglo de colores
         for (int y = 0; y < ALTO; y++)
         {
             for (int x = 0; x < ANCHO; x++)
             {
                 int indice = ((y * ANCHO) + x);
-                float rojo = (float)x / (ANCHO - 1) * 255;
-                float verde = (float)y / (ALTO - 1) * 255;
-                colores[indice] = (Color){(unsigned char)rojo, (unsigned char)verde, 128, 255};
+                float pantallax = ((x + 0.5f) / ANCHO * 2 - 1) * aspecto * mitad;
+                float pantallay = (1 - (y + 0.5f) / ALTO * 2) * mitad;
+                Vector3 direccion = Vector3Normalize(Vector3Add(Vector3Add(cam.forward, Vector3Scale(cam.right, pantallax)), Vector3Scale(cam.up, pantallay)));
+                colores[indice] = vectorColor(castRay(cam.position, direccion));
             }
         }
         // Lo paso a la textura
@@ -80,7 +94,6 @@ int main(void)
         ClearBackground(BLACK);
         DrawTextureEx(texturaColores, (Vector2){0, 0}, 0, ESCALA, WHITE);
         DrawFPS(5, 5);
-        DrawText(textInicio, (screenWidth / 2) - (measurement / 2), (screenHeight / 2) - (fontSize / 2), fontSize, RAYWHITE);
         EndDrawing();
     }
 
