@@ -105,6 +105,7 @@ Vector3 cielo(Vector3 direccion)
     }
 }
 
+// Para poder lanzar los rayos correctamente y calcular la reflexion le pedi ayuda a Claude a que me guiara paso a paso y asi fue como fui escribiendo el codigo
 Vector3 castRay(Vector3 origen, Vector3 direccion, int profundidad)
 {
     int indice = 0;
@@ -222,7 +223,7 @@ int main(void)
         cam.position = (Vector3){distancia * cosf(anguloVertical) * sinf(anguloHorizontal), distancia * sinf(anguloVertical), distancia * cosf(anguloVertical) * cosf(anguloHorizontal)};
         cameraLook(&cam, (Vector3){0, 0, 0});
 
-        // Arreglo de colores
+        // En este ciclo se genera un rayo por pixel y me basé en el proyecto base
         for (int y = 0; y < ALTO; y++)
         {
             for (int x = 0; x < ANCHO; x++)
