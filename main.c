@@ -105,7 +105,7 @@ Vector3 cielo(Vector3 direccion)
     }
 }
 
-Vector3 castRay(Vector3 origen, Vector3 direccion)
+Vector3 castRay(Vector3 origen, Vector3 direccion, int profundidad)
 {
     int indice = 0;
     RayCollision choque = colisionRayo(origen, direccion, &indice);
@@ -137,6 +137,13 @@ Vector3 castRay(Vector3 origen, Vector3 direccion)
     }
     Vector3 color = Vector3Scale(material.color, 0.25f + material.albedo * difusa);
     color = Vector3Add(color, Vector3Scale((Vector3){1, 1, 1}, material.especular * spec));
+    if (material.reflectividad > 0 && profundidad > 0)
+    {
+        Vector3 dirReflejo = Vector3Reflect(direccion, choque.normal);
+        Vector3 colorReflejo = castRay(origenSombra, dirReflejo, profundidad - 1);
+        colorReflejo = Vector3Multiply(colorReflejo, material.color);
+        color = Vector3Lerp(color, colorReflejo, material.reflectividad);
+    }
     color = Vector3Add(color, material.emision);
     return color;
 }
@@ -165,19 +172,19 @@ int main(void)
 
     // 1 Este es el piso
     cubosDiorama[numCubos].caja = (BoundingBox){{-3, -1.2f, -3}, {3, -1, 3}};
-    cubosDiorama[numCubos].material = (Materiales){.color = {0.50f, 0.62f, 0.85f}, .albedo = 0.9f, .especular = 0.1f, .brillo = 10};
+    cubosDiorama[numCubos].material = (Materiales){.color = {0.50f, 0.62f, 0.85f}, .albedo = 0.9f, .especular = 0.1f, .brillo = 10, .reflectividad = 0.3f};
     numCubos++;
     // 2
     cubosDiorama[numCubos].caja = (BoundingBox){{-0.5f, -1, -0.5f}, {0.5f, 0, 0.5f}};
-    cubosDiorama[numCubos].material = (Materiales){.color = {0.27f, 0.47f, 0.92f}, .albedo = 0.8f, .especular = 0.5f, .brillo = 32};
+    cubosDiorama[numCubos].material = (Materiales){.color = {0.27f, 0.47f, 0.92f}, .albedo = 0.8f, .especular = 0.5f, .brillo = 32, .reflectividad = 0.2f};
     numCubos++;
     // 3
-    cubosDiorama[numCubos].caja = (BoundingBox){{-2, -1, -0.5f}, {-1, 0, 0.5f}};
-    cubosDiorama[numCubos].material = (Materiales){.color = {0.22f, 0.67f, 0.89f}, .albedo = 0.8f, .especular = 0.3f, .brillo = 16};
+    cubosDiorama[numCubos].caja = (BoundingBox){{-2, -1, 0.5f}, {-1, 0, 1.5f}};
+    cubosDiorama[numCubos].material = (Materiales){.color = {0.22f, 0.67f, 0.89f}, .albedo = 0.8f, .especular = 0.3f, .brillo = 16, .reflectividad = 0.2f};
     numCubos++;
     // 4
-    cubosDiorama[numCubos].caja = (BoundingBox){{1, -1, -0.5f}, {2, 0, 0.5f}};
-    cubosDiorama[numCubos].material = (Materiales){.color = {0.41f, 0.81f, 1.0f}, .albedo = 0.8f, .especular = 0.3f, .brillo = 16};
+    cubosDiorama[numCubos].caja = (BoundingBox){{1, -1, -1.5f}, {2, 0, -0.5f}};
+    cubosDiorama[numCubos].material = (Materiales){.color = {1.0f, 0.7f, 0.7f}, .albedo = 0.8f, .especular = 0.3f, .brillo = 25, .reflectividad = 0.5f};
     numCubos++;
     // MSN
     modelo = LoadModel("munecoMSN.obj");
@@ -224,7 +231,7 @@ int main(void)
                 float pantallax = ((x + 0.5f) / ANCHO * 2 - 1) * aspecto * mitad;
                 float pantallay = (1 - (y + 0.5f) / ALTO * 2) * mitad;
                 Vector3 direccion = Vector3Normalize(Vector3Add(Vector3Add(cam.forward, Vector3Scale(cam.right, pantallax)), Vector3Scale(cam.up, pantallay)));
-                colores[indice] = vectorColor(castRay(cam.position, direccion));
+                colores[indice] = vectorColor(castRay(cam.position, direccion, 3));
             }
         }
         // Lo paso a la textura
